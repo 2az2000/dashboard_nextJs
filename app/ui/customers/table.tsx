@@ -1,28 +1,57 @@
+"use client";
 import Image from 'next/image';
 import { lusitana } from '@/app/ui/fonts';
 import Search from '@/app/ui/search';
 import {
   CustomersTableType,
   FormattedCustomersTable,
-} from '@/app/lib/definitions';
+  } from '@/app/lib/definitions';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { fetchFilteredCustomers } from '@/app/lib/data';
 
-export default async function CustomersTable({
-  customers,
-}: {
-  customers: FormattedCustomersTable[];
+
+export default function CustomersTable({
+  query,
+}: {  
+  query: string;
 }) {
+    const [customerData, setCustomerData] = useState<FormattedCustomersTable[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  // const [query, setQuery] = useState('');
+  const router = useRouter();
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const data = await fetchFilteredCustomers(query);
+        setCustomerData(data);
+      } catch (error) {
+        console.error('Error fetching customers:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, [query]);
+  if (isLoading) {
+    return <div className="mt-4">Loading...</div>;
+  }
   return (
     <div className="w-full">
       <h1 className={`${lusitana.className} mb-8 text-xl md:text-2xl`}>
         Customers
       </h1>
-      <Search placeholder="Search customers..." />
+      <Search 
+        placeholder="Search customers..." 
+        // onChange={(e) => setQuery(e.target.value)} 
+      />
       <div className="mt-6 flow-root">
         <div className="overflow-x-auto">
           <div className="inline-block min-w-full align-middle">
             <div className="overflow-hidden rounded-md bg-gray-50 p-2 md:pt-0">
               <div className="md:hidden">
-                {customers?.map((customer) => (
+                {customerData?.map((customer) => (
                   <div
                     key={customer.id}
                     className="mb-2 w-full rounded-md bg-white p-4"
@@ -84,7 +113,7 @@ export default async function CustomersTable({
                 </thead>
 
                 <tbody className="divide-y divide-gray-200 text-gray-900">
-                  {customers.map((customer) => (
+                  {customerData.map((customer) => (
                     <tr key={customer.id} className="group">
                       <td className="whitespace-nowrap bg-white py-5 pl-4 pr-3 text-sm text-black group-first-of-type:rounded-md group-last-of-type:rounded-md sm:pl-6">
                         <div className="flex items-center gap-3">
